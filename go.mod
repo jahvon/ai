@@ -1,4 +1,4 @@
-module github.com/jahvon/ai
+module github.com/jahvon/ai-adapter
 
 go 1.24.0
 

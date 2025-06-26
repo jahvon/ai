@@ -1,8 +1,8 @@
 # AI Adapter
 
 <p>
-    <a href="https://img.shields.io/github/v/release/jahvon/ai"><img src="https://img.shields.io/github/v/release/jahvon/ai" alt="GitHub release"></a>
-    <a href="https://pkg.go.dev/github.com/jahvon/ai"><img src="https://pkg.go.dev/badge/github.com/jahvon/ai.svg" alt="Go Reference"></a>
+    <a href="https://img.shields.io/github/v/release/jahvon/ai-adapter"><img src="https://img.shields.io/github/v/release/jahvon/ai-adapter" alt="GitHub release"></a>
+    <a href="https://pkg.go.dev/github.com/jahvon/ai-adapter"><img src="https://pkg.go.dev/badge/github.com/jahvon/ai-adapter.svg" alt="Go Reference"></a>
 </p>
 
 A unified Go library for interacting with multiple AI providers through a consistent interface.
@@ -20,7 +20,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/jahvon/ai"
+    "github.com/jahvon/ai-adapter"
 )
 
 func main() {

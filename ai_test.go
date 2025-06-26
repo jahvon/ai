@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jahvon/ai"
+	"github.com/jahvon/ai-adapter"
 )
 
 type providerTestCase struct {
