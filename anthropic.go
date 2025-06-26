@@ -62,16 +62,19 @@ func (a *AnthropicAdapter) GenerateStream(ctx context.Context, req *Request) (<-
 
 		for stream.Next() {
 			chunk := stream.Current()
-			switch chunk.Delta.Type {
-			case "text":
-				streamChan <- StreamResponse{
-					Content: chunk.Delta.Text,
-					Usage: &Usage{
-						PromptTokens:     int(chunk.Usage.InputTokens),
-						CompletionTokens: int(chunk.Usage.OutputTokens),
-						TotalTokens:      int(chunk.Usage.InputTokens + chunk.Usage.OutputTokens),
-					},
-					Model: string(chunk.Message.Model),
+			switch eventVariant := chunk.AsAny().(type) {
+			case anthropic.ContentBlockDeltaEvent:
+				switch deltaVariant := eventVariant.Delta.AsAny().(type) {
+				case anthropic.TextDelta:
+					streamChan <- StreamResponse{
+						Content: deltaVariant.Text,
+						Usage: &Usage{
+							PromptTokens:     int(chunk.Usage.InputTokens),
+							CompletionTokens: int(chunk.Usage.OutputTokens),
+							TotalTokens:      int(chunk.Usage.InputTokens + chunk.Usage.OutputTokens),
+						},
+						Model: string(chunk.Message.Model),
+					}
 				}
 			}
 		}

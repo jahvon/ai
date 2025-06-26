@@ -28,6 +28,10 @@ const (
 	ModelSonnet4_0 Model = Model(anthropic.ModelClaudeSonnet4_0)
 )
 
+const (
+	DefaultMaxTokens int64 = 1024
+)
+
 type Config struct {
 	Provider    Provider      `yaml:"provider" json:"provider"`
 	Model       Model         `yaml:"model" json:"model"`
@@ -39,7 +43,10 @@ type Config struct {
 }
 
 func NewConfig() *Config {
-	return &Config{}
+	t := DefaultMaxTokens
+	return &Config{
+		MaxTokens: &t,
+	}
 }
 
 func (c *Config) Validate() error {

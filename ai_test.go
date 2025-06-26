@@ -2,87 +2,94 @@ package ai_test
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"os"
 	"testing"
 
-	ai "github.com/jahvon/ai"
+	"github.com/jahvon/ai"
 )
 
-func TestOpenAIAdapter_E2E(t *testing.T) {
-	apiKey := os.Getenv("OPENAI_API_KEY")
-	if apiKey == "" {
-		t.Skip("OPENAI_API_KEY environment variable not set")
-	}
-
-	cfg := ai.NewConfig().
-		WithProvider(ai.ProviderOpenAI).
-		WithModel(ai.ModelGPT4oMini).
-		WithAPIKeyEnv("OPENAI_API_KEY")
-
-	adapter, err := ai.NewAdapter(cfg)
-	if err != nil {
-		t.Fatalf("Failed to create OpenAI adapter: %v", err)
-	}
-
-	req := &ai.Request{
-		UserPrompt: "Say hello in exactly 3 words.",
-	}
-
-	ctx := context.Background()
-	resp, err := adapter.Generate(ctx, req)
-	if err != nil {
-		t.Fatalf("Failed to generate response: %v", err)
-	}
-
-	log.Printf("OpenAI Response: %s", resp.Content)
-	log.Printf("Model: %s", resp.Model)
-	log.Printf("Usage: %+v", resp.Usage)
-
-	if resp.Content == "" {
-		t.Error("Expected non-empty response content")
-	}
-
-	if resp.Usage == nil {
-		t.Error("Expected usage information")
-	}
+type providerTestCase struct {
+	name        string
+	provider    ai.Provider
+	model       ai.Model
+	apiKeyEnv   string
+	skipMessage string
 }
 
-func TestAnthropicAdapter_E2E(t *testing.T) {
-	apiKey := os.Getenv("ANTHROPIC_API_KEY")
-	if apiKey == "" {
-		t.Skip("ANTHROPIC_API_KEY environment variable not set")
+func TestProviders_E2E(t *testing.T) {
+	testCases := map[string]providerTestCase{
+		"OpenAI": {
+			name:        "OpenAI",
+			provider:    ai.ProviderOpenAI,
+			model:       ai.ModelGPT4oMini,
+			apiKeyEnv:   "OPENAI_API_KEY",
+			skipMessage: "OPENAI_API_KEY environment variable not set",
+		},
+		"Anthropic": {
+			name:        "Anthropic",
+			provider:    ai.ProviderAnthropic,
+			model:       ai.ModelSonnet3_5,
+			apiKeyEnv:   "ANTHROPIC_API_KEY",
+			skipMessage: "ANTHROPIC_API_KEY environment variable not set",
+		},
 	}
 
-	cfg := ai.NewConfig().
-		WithProvider(ai.ProviderAnthropic).
-		WithModel(ai.ModelSonnet3_5).
-		WithAPIKeyEnv("ANTHROPIC_API_KEY")
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			apiKey := os.Getenv(tc.apiKeyEnv)
+			if apiKey == "" {
+				t.Skip(tc.skipMessage)
+			}
 
-	adapter, err := ai.NewAdapter(cfg)
-	if err != nil {
-		t.Fatalf("Failed to create Anthropic adapter: %v", err)
-	}
+			cfg := ai.NewConfig().
+				WithProvider(tc.provider).
+				WithModel(tc.model).
+				WithAPIKeyEnv(tc.apiKeyEnv).
+				WithMaxTokens(int64(500))
 
-	req := &ai.Request{
-		UserPrompt: "Say hello in exactly 3 words.",
-	}
+			adapter, err := ai.NewAdapter(cfg)
+			if err != nil {
+				t.Fatalf("Failed to create %s adapter: %v", tc.name, err)
+			}
 
-	ctx := context.Background()
-	resp, err := adapter.Generate(ctx, req)
-	if err != nil {
-		t.Fatalf("Failed to generate response: %v", err)
-	}
+			req := &ai.Request{
+				UserPrompt:   "Tell me a joke",
+				SystemPrompt: "You are a pirate stranded at sea",
+			}
 
-	log.Printf("Anthropic Response: %s", resp.Content)
-	log.Printf("Model: %s", resp.Model)
-	log.Printf("Usage: %+v", resp.Usage)
+			ctx := context.Background()
+			resp, err := adapter.Generate(ctx, req)
+			if err != nil {
+				t.Fatalf("Failed to generate response: %v", err)
+			}
 
-	if resp.Content == "" {
-		t.Error("Expected non-empty response content")
-	}
+			fmt.Printf("%s Response:\n%s\n\n", tc.name, resp.Content)
+			fmt.Printf("Model:\n%s\n\n", resp.Model)
+			fmt.Printf("Usage:\n%+v\n\n", resp.Usage)
 
-	if resp.Usage == nil {
-		t.Error("Expected usage information")
+			if resp.Content == "" {
+				t.Error("Expected non-empty response content")
+			}
+
+			if resp.Usage == nil {
+				t.Error("Expected usage information")
+			}
+
+			stream, err := adapter.GenerateStream(ctx, req)
+			if err != nil {
+				t.Fatalf("Failed to generate stream: %v", err)
+			}
+
+			accumulated, err := ai.CollectStream(ctx, stream)
+			if err != nil {
+				t.Fatalf("Failed to accumulate stream: %v", err)
+			}
+
+			fmt.Printf("Accumulated Response:\n%s\n\n", accumulated)
+			if accumulated == "" {
+				t.Error("Expected non-empty response content")
+			}
+		})
 	}
 }

@@ -1,0 +1,11 @@
+visibility: private
+tags: [development]
+executables:
+  - verb: test
+    exec:
+      params:
+        - envKey: OPENAI_API_KEY
+          secretRef: openai-api-key
+        - envKey: ANTHROPIC_API_KEY
+          secretRef: anthropic-api-key
+      cmd: go test ./...
